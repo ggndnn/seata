@@ -87,7 +87,7 @@ public abstract class AbstractDMLBaseExecutor<T, S extends Statement> extends Ba
         AbstractConnectionProxy connectionProxy = statementProxy.getConnectionProxy();
         LockRetryController lockRetryController = new LockRetryController();
         try {
-            connectionProxy.setAutoCommit(false);
+            connectionProxy.getTargetConnection().setAutoCommit(false);
             while (true) {
                 try {
                     result = executeAutoCommitFalse(args);
@@ -102,9 +102,10 @@ public abstract class AbstractDMLBaseExecutor<T, S extends Statement> extends Ba
         } catch (Exception e) {
             // when exception occur in finally,this exception will lost, so just print it here
             LOGGER.error("exception occur", e);
+            connectionProxy.rollback();
             throw e;
         } finally {
-            connectionProxy.setAutoCommit(true);
+            connectionProxy.getTargetConnection().setAutoCommit(true);
         }
         return result;
     }
