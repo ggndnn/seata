@@ -22,6 +22,7 @@ import java.util.Collection;
 import io.seata.common.exception.ShouldNeverHappenException;
 import io.seata.common.exception.StoreException;
 import io.seata.common.loader.EnhancedServiceLoader;
+import io.seata.common.loader.EnhancedServiceNotFoundException;
 import io.seata.common.util.StringUtils;
 import io.seata.config.Configuration;
 import io.seata.config.ConfigurationFactory;
@@ -46,37 +47,7 @@ public class SessionHolder {
      */
     protected static final Configuration CONFIG = ConfigurationFactory.getInstance();
 
-    /**
-     * The constant DEFAULT.
-     */
-    public static final String DEFAULT = "default";
-
-    /**
-     * The constant ROOT_SESSION_MANAGER_NAME.
-     */
-    public static final String ROOT_SESSION_MANAGER_NAME = "root.data";
-    /**
-     * The constant ASYNC_COMMITTING_SESSION_MANAGER_NAME.
-     */
-    public static final String ASYNC_COMMITTING_SESSION_MANAGER_NAME = "async.commit.data";
-    /**
-     * The constant RETRY_COMMITTING_SESSION_MANAGER_NAME.
-     */
-    public static final String RETRY_COMMITTING_SESSION_MANAGER_NAME = "retry.commit.data";
-    /**
-     * The constant RETRY_ROLLBACKING_SESSION_MANAGER_NAME.
-     */
-    public static final String RETRY_ROLLBACKING_SESSION_MANAGER_NAME = "retry.rollback.data";
-
-    /**
-     * The default session store dir
-     */
-    public static final String DEFAULT_SESSION_STORE_FILE_DIR = "sessionStore";
-
-    private static SessionManager ROOT_SESSION_MANAGER;
-    private static SessionManager ASYNC_COMMITTING_SESSION_MANAGER;
-    private static SessionManager RETRY_COMMITTING_SESSION_MANAGER;
-    private static SessionManager RETRY_ROLLBACKING_SESSION_MANAGER;
+    private static SessionModeInitialize sessionMode;
 
     /**
      * Init.
@@ -89,33 +60,9 @@ public class SessionHolder {
             //use default
             mode = CONFIG.getConfig(ConfigurationKeys.STORE_MODE);
         }
-        //the store mode
-        StoreMode storeMode = StoreMode.valueof(mode);
-        if (StoreMode.DB.equals(storeMode)) {
-            //database store
-            ROOT_SESSION_MANAGER = EnhancedServiceLoader.load(SessionManager.class, StoreMode.DB.name());
-            ASYNC_COMMITTING_SESSION_MANAGER = EnhancedServiceLoader.load(SessionManager.class, StoreMode.DB.name(),
-                new Object[] {ASYNC_COMMITTING_SESSION_MANAGER_NAME});
-            RETRY_COMMITTING_SESSION_MANAGER = EnhancedServiceLoader.load(SessionManager.class, StoreMode.DB.name(),
-                new Object[] {RETRY_COMMITTING_SESSION_MANAGER_NAME});
-            RETRY_ROLLBACKING_SESSION_MANAGER = EnhancedServiceLoader.load(SessionManager.class, StoreMode.DB.name(),
-                new Object[] {RETRY_ROLLBACKING_SESSION_MANAGER_NAME});
-        } else if (StoreMode.FILE.equals(storeMode)) {
-            //file store
-            String sessionStorePath = CONFIG.getConfig(ConfigurationKeys.STORE_FILE_DIR, DEFAULT_SESSION_STORE_FILE_DIR);
-            if (sessionStorePath == null) {
-                throw new StoreException("the {store.file.dir} is empty.");
-            }
-            ROOT_SESSION_MANAGER = EnhancedServiceLoader.load(SessionManager.class, StoreMode.FILE.name(),
-                new Object[] {ROOT_SESSION_MANAGER_NAME, sessionStorePath});
-            ASYNC_COMMITTING_SESSION_MANAGER = EnhancedServiceLoader.load(SessionManager.class, DEFAULT,
-                new Object[] {ASYNC_COMMITTING_SESSION_MANAGER_NAME});
-            RETRY_COMMITTING_SESSION_MANAGER = EnhancedServiceLoader.load(SessionManager.class, DEFAULT,
-                new Object[] {RETRY_COMMITTING_SESSION_MANAGER_NAME});
-            RETRY_ROLLBACKING_SESSION_MANAGER = EnhancedServiceLoader.load(SessionManager.class, DEFAULT,
-                new Object[] {RETRY_ROLLBACKING_SESSION_MANAGER_NAME});
-        } else {
-            //unknown store
+        try {
+            sessionMode = EnhancedServiceLoader.load(SessionModeInitialize.class, mode);
+        } catch(EnhancedServiceNotFoundException e) {
             throw new IllegalArgumentException("unknown store mode:" + mode);
         }
         //relaod
@@ -126,10 +73,11 @@ public class SessionHolder {
      * Reload.
      */
     protected static void reload() {
-        if (ROOT_SESSION_MANAGER instanceof Reloadable) {
-            ((Reloadable)ROOT_SESSION_MANAGER).reload();
+        SessionManager rootSessionManager = sessionMode.getRootSessionManager();
+        if (rootSessionManager instanceof Reloadable) {
+            ((Reloadable)rootSessionManager).reload();
 
-            Collection<GlobalSession> reloadedSessions = ROOT_SESSION_MANAGER.allSessions();
+            Collection<GlobalSession> reloadedSessions = rootSessionManager.allSessions();
             if (reloadedSessions != null && !reloadedSessions.isEmpty()) {
                 reloadedSessions.forEach(globalSession -> {
                     GlobalStatus globalStatus = globalSession.getStatus();
@@ -208,10 +156,10 @@ public class SessionHolder {
      * @return the root session manager
      */
     public static final SessionManager getRootSessionManager() {
-        if (ROOT_SESSION_MANAGER == null) {
+        if (sessionMode.getRootSessionManager() == null) {
             throw new ShouldNeverHappenException("SessionManager is NOT init!");
         }
-        return ROOT_SESSION_MANAGER;
+        return sessionMode.getRootSessionManager();
     }
 
     /**
@@ -220,10 +168,10 @@ public class SessionHolder {
      * @return the async committing session manager
      */
     public static final SessionManager getAsyncCommittingSessionManager() {
-        if (ASYNC_COMMITTING_SESSION_MANAGER == null) {
+        if (sessionMode.getAsyncCommittingSessionManager() == null) {
             throw new ShouldNeverHappenException("SessionManager is NOT init!");
         }
-        return ASYNC_COMMITTING_SESSION_MANAGER;
+        return sessionMode.getAsyncCommittingSessionManager();
     }
 
     /**
@@ -232,10 +180,10 @@ public class SessionHolder {
      * @return the retry committing session manager
      */
     public static final SessionManager getRetryCommittingSessionManager() {
-        if (RETRY_COMMITTING_SESSION_MANAGER == null) {
+        if (sessionMode.getRetryCommittingSessionManager() == null) {
             throw new ShouldNeverHappenException("SessionManager is NOT init!");
         }
-        return RETRY_COMMITTING_SESSION_MANAGER;
+        return sessionMode.getRetryCommittingSessionManager();
     }
 
     /**
@@ -244,10 +192,10 @@ public class SessionHolder {
      * @return the retry rollbacking session manager
      */
     public static final SessionManager getRetryRollbackingSessionManager() {
-        if (RETRY_ROLLBACKING_SESSION_MANAGER == null) {
+        if (sessionMode.getRetryRollbackingSessionManager() == null) {
             throw new ShouldNeverHappenException("SessionManager is NOT init!");
         }
-        return RETRY_ROLLBACKING_SESSION_MANAGER;
+        return sessionMode.getRetryRollbackingSessionManager();
     }
 
     /**
@@ -261,9 +209,6 @@ public class SessionHolder {
     }
 
     public static void destory() {
-        ROOT_SESSION_MANAGER.destroy();
-        ASYNC_COMMITTING_SESSION_MANAGER.destroy();
-        RETRY_COMMITTING_SESSION_MANAGER.destroy();
-        RETRY_ROLLBACKING_SESSION_MANAGER.destroy();
+        sessionMode.destory();
     }
 }

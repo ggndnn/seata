@@ -28,12 +28,12 @@ import io.seata.core.model.BranchStatus;
 import io.seata.core.model.GlobalStatus;
 import io.seata.core.store.StoreMode;
 import io.seata.server.session.AbstractSessionManager;
-import io.seata.server.session.BranchSession;
-import io.seata.server.session.GlobalSession;
-import io.seata.server.session.SessionCondition;
-import io.seata.server.session.SessionHolder;
 import io.seata.server.session.SessionLifecycleListener;
 import io.seata.server.session.SessionManager;
+import io.seata.server.session.GlobalSession;
+import io.seata.server.session.BranchSession;
+import io.seata.server.session.SessionCondition;
+import io.seata.server.session.SessionModeInitialize;
 import io.seata.server.store.TransactionStoreManager;
 import io.seata.server.store.TransactionStoreManager.LogOperation;
 import org.slf4j.Logger;
@@ -160,11 +160,11 @@ public class DataBaseSessionManager extends AbstractSessionManager
     @Override
     public Collection<GlobalSession> allSessions() {
         //get by taskName
-        if (SessionHolder.ASYNC_COMMITTING_SESSION_MANAGER_NAME.equalsIgnoreCase(taskName)) {
+        if (SessionModeInitialize.ASYNC_COMMITTING_SESSION_MANAGER_NAME.equalsIgnoreCase(taskName)) {
             return findGlobalSessions(new SessionCondition(GlobalStatus.AsyncCommitting));
-        } else if (SessionHolder.RETRY_COMMITTING_SESSION_MANAGER_NAME.equalsIgnoreCase(taskName)) {
+        } else if (SessionModeInitialize.RETRY_COMMITTING_SESSION_MANAGER_NAME.equalsIgnoreCase(taskName)) {
             return findGlobalSessions(new SessionCondition(new GlobalStatus[] {GlobalStatus.CommitRetrying}));
-        } else if (SessionHolder.RETRY_ROLLBACKING_SESSION_MANAGER_NAME.equalsIgnoreCase(taskName)) {
+        } else if (SessionModeInitialize.RETRY_ROLLBACKING_SESSION_MANAGER_NAME.equalsIgnoreCase(taskName)) {
             return findGlobalSessions(new SessionCondition(new GlobalStatus[] {GlobalStatus.RollbackRetrying,
                 GlobalStatus.TimeoutRollbacking, GlobalStatus.TimeoutRollbackRetrying}));
         } else {

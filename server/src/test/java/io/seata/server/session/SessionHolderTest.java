@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 
-import static io.seata.server.session.SessionHolder.ROOT_SESSION_MANAGER_NAME;
+import static io.seata.server.session.SessionModeInitialize.ROOT_SESSION_MANAGER_NAME;
 
 /**
  * The type Session holder test.

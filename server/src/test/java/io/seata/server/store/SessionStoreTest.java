@@ -26,10 +26,7 @@ import io.seata.core.model.BranchType;
 import io.seata.core.model.GlobalStatus;
 import io.seata.server.lock.LockManager;
 import io.seata.server.lock.memory.MemoryLockManagerForTest;
-import io.seata.server.session.BranchSession;
-import io.seata.server.session.GlobalSession;
-import io.seata.server.session.SessionHelper;
-import io.seata.server.session.SessionHolder;
+import io.seata.server.session.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,8 +53,8 @@ public class SessionStoreTest {
     @BeforeEach
     public void clean() throws Exception {
         String sessionStorePath = CONFIG.getConfig(ConfigurationKeys.STORE_FILE_DIR);
-        File rootDataFile = new File(sessionStorePath + File.separator + SessionHolder.ROOT_SESSION_MANAGER_NAME);
-        File rootDataFileHis = new File(sessionStorePath + File.separator + SessionHolder.ROOT_SESSION_MANAGER_NAME + ".1");
+        File rootDataFile = new File(sessionStorePath + File.separator + SessionModeInitialize.ROOT_SESSION_MANAGER_NAME);
+        File rootDataFileHis = new File(sessionStorePath + File.separator + SessionModeInitialize.ROOT_SESSION_MANAGER_NAME + ".1");
 
         if (rootDataFile.exists()) {
             rootDataFile.delete();

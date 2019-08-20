@@ -1,0 +1,2 @@
+io.seata.server.session.file.FileBasedSessionModeInitialize
+io.seata.server.session.db.DataBaseSessionModeInitialize
