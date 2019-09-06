@@ -22,15 +22,22 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * ggndnn
+ * @author ggndnn
  */
 public class DruidDbTypeParserTest {
     @Test
-    public void testDruidDbTypeParser() {
+    public void testDruidDbTypeParserLoading() {
         String jdbcUrl = "jdbc:mysql://127.0.0.1:3306/seata";
-        DbTypeParser dbTypeParser = EnhancedServiceLoader.load(DbTypeParser.class, SqlParserType.SQL_PARSER_TYPE_DRUID);
+        DruidDelegatingDbTypeParser dbTypeParser = (DruidDelegatingDbTypeParser) EnhancedServiceLoader.load(DbTypeParser.class, SqlParserType.SQL_PARSER_TYPE_DRUID);
         Assertions.assertNotNull(dbTypeParser);
+        DruidLoader druidLoaderForTest = new DruidLoaderForTest();
+        dbTypeParser.setClassLoader(new DruidIsolationClassLoader(druidLoaderForTest));
+        Assertions.assertEquals(DruidDelegatingDbTypeParser.class, dbTypeParser.getClass());
         String dbType = dbTypeParser.parseFromJdbcUrl(jdbcUrl);
         Assertions.assertEquals("mysql", dbType);
+
+        druidLoaderForTest = new DefaultDruidLoader("lib/sqlparser/test-druid");
+        dbTypeParser.setClassLoader(new DruidIsolationClassLoader(druidLoaderForTest));
+        Assertions.assertThrows(NoClassDefFoundError.class, () -> dbTypeParser.parseFromJdbcUrl(jdbcUrl));
     }
 }

@@ -44,7 +44,7 @@ public class SQLOperateRecognizerHolderFactory {
                 if (recognizerHolderMap == null) {
                     Map<String, SQLOperateRecognizerHolder> initializedMap = new HashMap<>();
                     List<SQLOperateRecognizerHolder> holderList = EnhancedServiceLoader.loadAll(
-                        SQLOperateRecognizerHolder.class);
+                        SQLOperateRecognizerHolder.class, SQLOperateRecognizerHolderFactory.class.getClassLoader());
                     for (SQLOperateRecognizerHolder holder : holderList) {
                         initializedMap.put(holder.getDbType().toLowerCase(), holder);
                     }

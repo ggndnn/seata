@@ -148,8 +148,19 @@ public class EnhancedServiceLoader {
      * @return list list
      */
     public static <S> List<S> loadAll(Class<S> service) {
+        return loadAll(service, findClassLoader());
+    }
+
+    /**
+     * get all implements
+     * @param service the service
+     * @param loader the loader
+     * @param <S> the type parameter
+     * @return
+     */
+    public static <S> List<S> loadAll(Class<S> service, ClassLoader loader) {
         List<S> allInstances = new ArrayList<>();
-        List<Class> allClazzs = getAllExtensionClass(service);
+        List<Class> allClazzs = getAllExtensionClass(service, loader);
         if (CollectionUtils.isEmpty(allClazzs)) {
             return allInstances;
         }
@@ -171,7 +182,7 @@ public class EnhancedServiceLoader {
      * @return all extension class
      */
     @SuppressWarnings("rawtypes")
-    public static <S> List<Class> getAllExtensionClass(Class<S> service) {
+    static <S> List<Class> getAllExtensionClass(Class<S> service) {
         return findAllExtensionClass(service, null, findClassLoader());
     }
 
@@ -184,7 +195,7 @@ public class EnhancedServiceLoader {
      * @return all extension class
      */
     @SuppressWarnings("rawtypes")
-    public static <S> List<Class> getAllExtensionClass(Class<S> service, ClassLoader loader) {
+    static <S> List<Class> getAllExtensionClass(Class<S> service, ClassLoader loader) {
         return findAllExtensionClass(service, null, loader);
     }
 
