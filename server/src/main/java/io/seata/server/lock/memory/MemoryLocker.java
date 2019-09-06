@@ -93,6 +93,7 @@ public class MemoryLocker extends AbstractLocker {
                 tableLockMap.putIfAbsent(bucketId, new ConcurrentHashMap<String, Long>());
                 bucketLockMap = tableLockMap.get(bucketId);
             }
+            boolean lockConflict = false;
             synchronized (bucketLockMap) {
                 Long lockingTransactionId = bucketLockMap.get(pk);
                 if (lockingTransactionId == null) {
@@ -109,15 +110,18 @@ public class MemoryLocker extends AbstractLocker {
                     // Locked by me
                     continue;
                 } else {
+                    lockConflict = true;
                     LOGGER.info("Global lock on [" + tableName + ":" + pk + "] is holding by " + lockingTransactionId);
-                    try {
-                        // Release all acquired locks.
-                        branchSession.unlock();
-                    } catch (TransactionException e) {
-                        throw new FrameworkException(e);
-                    }
-                    return false;
                 }
+            }
+            if (lockConflict) {
+                try {
+                    // Release all acquired locks.
+                    branchSession.unlock();
+                } catch (TransactionException e) {
+                    throw new FrameworkException(e);
+                }
+                return false;
             }
         }
         return true;

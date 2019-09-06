@@ -15,10 +15,14 @@
  */
 package io.seata.server.lock;
 
+import io.seata.core.exception.TransactionException;
 import io.seata.core.model.BranchType;
 import io.seata.server.UUIDGenerator;
 import io.seata.server.lock.memory.MemoryLockManagerForTest;
 import io.seata.server.session.BranchSession;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -63,6 +67,43 @@ public class LockManagerTest {
     }
 
     /**
+     * deadlock test.
+     *
+     * @param branchSession1 the branch session 1
+     * @param branchSession2 the branch session 2
+     * @throws Exception the exception
+     */
+    @ParameterizedTest
+    @MethodSource("deadlockBranchSessionsProvider")
+    public void deadlockTest(BranchSession branchSession1, BranchSession branchSession2) throws Exception {
+        LockManager lockManager = new MemoryLockManagerForTest();
+        final AtomicBoolean first = new AtomicBoolean();
+        final AtomicBoolean second = new AtomicBoolean();
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        new Thread(() -> {
+            try {
+                first.set(lockManager.acquireLock(branchSession1));
+            } catch (TransactionException e) {
+                e.printStackTrace();
+            } finally {
+                countDownLatch.countDown();
+            }
+        }).start();
+        new Thread(() -> {
+            try {
+                second.set(lockManager.acquireLock(branchSession2));
+            } catch (TransactionException e) {
+                e.printStackTrace();
+            } finally {
+                countDownLatch.countDown();
+            }
+        }).start();
+        // Assume execute more than 5 seconds means deadlock happened.
+        Assertions.assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
+    }
+
+
+    /**
      * Is lockable test.
      *
      * @param branchSession the branch session
@@ -102,18 +143,18 @@ public class LockManagerTest {
     }
 
     /**
-     * Branch sessions provider object [ ] [ ].
+     * Base branch sessions provider object [ ] [ ]. Could assign resource and lock keys.
      *
      * @return the object [ ] [ ]
      */
-    static Stream<Arguments> branchSessionsProvider() {
+    static Stream<Arguments> baseBranchSessionsProvider(String resource, String lockKey1, String lockKey2) {
         BranchSession branchSession1 = new BranchSession();
         branchSession1.setTransactionId(UUIDGenerator.generateUUID());
         branchSession1.setBranchId(1L);
         branchSession1.setClientId("c1");
         branchSession1.setResourceGroupId("my_test_tx_group");
-        branchSession1.setResourceId("tb_1");
-        branchSession1.setLockKey("t:1,2");
+        branchSession1.setResourceId(resource);
+        branchSession1.setLockKey(lockKey1);
         branchSession1.setBranchType(BranchType.AT);
         branchSession1.setApplicationData("{\"data\":\"test\"}");
         branchSession1.setBranchType(BranchType.AT);
@@ -123,12 +164,25 @@ public class LockManagerTest {
         branchSession2.setBranchId(2L);
         branchSession2.setClientId("c1");
         branchSession2.setResourceGroupId("my_test_tx_group");
-        branchSession2.setResourceId("tb_1");
-        branchSession2.setLockKey("t:1,2");
+        branchSession2.setResourceId(resource);
+        branchSession2.setLockKey(lockKey2);
         branchSession2.setBranchType(BranchType.AT);
         branchSession2.setApplicationData("{\"data\":\"test\"}");
         branchSession2.setBranchType(BranchType.AT);
         return Stream.of(
-                Arguments.of(branchSession1, branchSession2));
+            Arguments.of(branchSession1, branchSession2));
+    }
+
+    /**
+     * Branch sessions provider object [ ] [ ].
+     *
+     * @return the object [ ] [ ]
+     */
+    static Stream<Arguments> branchSessionsProvider() {
+        return baseBranchSessionsProvider("tb_1", "t:1,2", "t:1,2");
+    }
+
+    static Stream<Arguments> deadlockBranchSessionsProvider() {
+        return baseBranchSessionsProvider("tb_2", "t:1,2,3,4,5", "t:5,4,3,2,1");
     }
 }
