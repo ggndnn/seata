@@ -15,11 +15,11 @@
  */
 package io.seata.rm.datasource;
 
-import com.alibaba.druid.util.JdbcConstants;
 import io.seata.rm.datasource.sql.SQLRecognizer;
 import io.seata.rm.datasource.sql.SQLVisitorFactory;
+import io.seata.rm.datasource.sql.druid.DruidIsolationClassLoader;
 import io.seata.rm.datasource.sql.druid.MySQLSelectForUpdateRecognizer;
-
+import io.seata.rm.datasource.util.JdbcConstants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -40,6 +40,7 @@ public class SQLVisitorFactoryTest {
 
         sql = sql + " for update";
         recognizer = SQLVisitorFactory.get(sql, dbType);
-        Assertions.assertTrue(recognizer instanceof MySQLSelectForUpdateRecognizer);
+        Assertions.assertEquals(MySQLSelectForUpdateRecognizer.class.getName(), recognizer.getClass().getName());
+        Assertions.assertTrue(recognizer.getClass().getClassLoader() instanceof DruidIsolationClassLoader);
     }
 }

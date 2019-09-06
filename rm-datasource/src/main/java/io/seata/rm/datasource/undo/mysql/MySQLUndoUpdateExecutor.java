@@ -15,7 +15,7 @@
  */
 package io.seata.rm.datasource.undo.mysql;
 
-import com.alibaba.druid.util.JdbcConstants;
+import io.seata.rm.datasource.util.JdbcConstants;
 import io.seata.common.exception.ShouldNeverHappenException;
 import io.seata.rm.datasource.sql.struct.Field;
 import io.seata.rm.datasource.sql.struct.Row;

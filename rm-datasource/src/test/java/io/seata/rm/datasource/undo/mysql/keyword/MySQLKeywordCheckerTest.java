@@ -17,7 +17,7 @@ package io.seata.rm.datasource.undo.mysql.keyword;
 
 import java.sql.Types;
 
-import com.alibaba.druid.util.JdbcConstants;
+import io.seata.rm.datasource.util.JdbcConstants;
 import io.seata.rm.datasource.sql.SQLType;
 import io.seata.rm.datasource.sql.struct.Field;
 import io.seata.rm.datasource.sql.struct.KeyType;

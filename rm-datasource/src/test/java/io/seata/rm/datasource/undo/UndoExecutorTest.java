@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import com.alibaba.druid.util.JdbcConstants;
+import io.seata.rm.datasource.util.JdbcConstants;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import io.seata.rm.datasource.sql.SQLType;
