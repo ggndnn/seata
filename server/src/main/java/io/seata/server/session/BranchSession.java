@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.seata.common.util.CompressUtil;
 import io.seata.core.exception.TransactionException;
@@ -65,7 +66,7 @@ public class BranchSession implements Lockable, Comparable<BranchSession>, Sessi
 
     private String applicationData;
 
-    private ConcurrentHashMap<Map<String, Long>, Set<String>> lockHolder
+    private ConcurrentHashMap<Map<String, AtomicLong>, Set<String>> lockHolder
         = new ConcurrentHashMap<>();
 
     /**
@@ -263,7 +264,7 @@ public class BranchSession implements Lockable, Comparable<BranchSession>, Sessi
      *
      * @return the lock holder
      */
-    public ConcurrentHashMap<Map<String, Long>, Set<String>> getLockHolder() {
+    public ConcurrentHashMap<Map<String, AtomicLong>, Set<String>> getLockHolder() {
         return lockHolder;
     }
 
