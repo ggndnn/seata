@@ -44,6 +44,7 @@
         <module>metrics</module>
         <module>codec</module>
         <module>saga</module>
+        <module>benchmark</module>
     </modules>
     <packaging>pom</packaging>
 

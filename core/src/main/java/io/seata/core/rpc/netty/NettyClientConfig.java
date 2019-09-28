@@ -53,6 +53,8 @@ public class NettyClientConfig extends NettyBaseConfig {
     private static final boolean DEFAULT_POOL_TEST_RETURN = true;
     private static final boolean DEFAULT_POOL_LIFO = true;
 
+    public int poolSize;
+
     /**
      * Gets connect timeout millis.
      *
@@ -388,7 +390,7 @@ public class NettyClientConfig extends NettyBaseConfig {
      * @return the max pool active
      */
     public int getMaxPoolActive() {
-        return DEFAULT_MAX_POOL_ACTIVE;
+        return poolSize > 0 ? poolSize : DEFAULT_MAX_POOL_ACTIVE;
     }
 
     /**
